@@ -7,7 +7,7 @@
 // The heavy lifting (outline, screenshot validation, limits, stable JSON) belongs to the
 // kit's buildDossier, vendored unchanged at ./vendor/makefun-game.ts.
 
-import { cpSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-game.ts';
@@ -55,10 +55,16 @@ export function stage(out: string): StageReport {
 
   const dossier = join(out, 'dossier.json');
   writeFileSync(dossier, buildDossier(out, LIMITS));
+  const bytes = statSync(dossier).size;
+  if (bytes > 1_572_864) {
+    throw new Error(`dossier.json is ${bytes} bytes, over the 1.5 MiB cap`);
+  }
   return { output: out, game: join(out, 'game'), screenshots: pictures, dossier };
 }
 
 // The gate calls this file directly; MAKEFUN_OUTPUT_DIR names the sandbox mount.
 export const output = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 const report = stage(output);
-console.log(`staged ${report.screenshots.length} screenshots and ${report.game} -> ${report.dossier}`);
+const size = statSync(report.dossier).size;
+console.log(`staged ${report.screenshots.length} screenshots -> ${report.game}`);
+console.log(`wrote ${report.dossier} (${size} bytes)`);

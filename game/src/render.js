@@ -65,17 +65,18 @@ function facadeTexture() {
   });
 }
 
-// Asphalt with a dashed centre line and solid paint at both edges.
+// Asphalt with a dashed centre line and solid paint at both edges. Dashes run along the
+// texture's U axis so one tile is one 30 m stretch of road once repeat.x is set below.
 function roadTexture() {
-  return canvasTexture(64, 256, (g, w, h) => {
+  return canvasTexture(256, 64, (g, w, h) => {
     g.fillStyle = '#50555d';
     g.fillRect(0, 0, w, h);
     g.fillStyle = '#f0ead6';
     g.globalAlpha = 0.85;
-    for (let y = 0; y < h; y += 64) g.fillRect(w / 2 - 2, y + 12, 4, 34);
+    for (let x = 0; x < w; x += 64) g.fillRect(x + 10, h / 2 - 2, 30, 4);
     g.globalAlpha = 0.5;
-    g.fillRect(4, 0, 3, h);
-    g.fillRect(w - 7, 0, 3, h);
+    g.fillRect(0, 4, w, 3);
+    g.fillRect(0, h - 7, w, 3);
     g.globalAlpha = 0.08;
     for (let i = 0; i < 40; i += 1) {
       const x = (i * 37) % w;
@@ -254,7 +255,7 @@ export function createRenderer(canvas) {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 0.98;
   return renderer;
 }
 
@@ -268,10 +269,11 @@ export function buildScene(renderer, world) {
   // The reference build read too dark on the ground; a real ambient term plus a bright
   // hemisphere keeps asphalt and sand in the same afternoon light as the towers. The sun
   // now carries the contrast instead of blowing out the pavement to white.
-  scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-  scene.add(new THREE.HemisphereLight(0xd7ecff, 0xd8c39c, 0.85));
+  // Warm bounced light, so white stucco reads as afternoon sun instead of grey card.
+  scene.add(new THREE.AmbientLight(0xffe2c4, 0.3));
+  scene.add(new THREE.HemisphereLight(0xcfe6ff, 0xe8c9a0, 0.75));
 
-  const sun = new THREE.DirectionalLight(PALETTE.sun, 1.8);
+  const sun = new THREE.DirectionalLight(PALETTE.sun, 2.0);
   sun.position.copy(sunDir.clone().multiplyScalar(420));
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
@@ -328,9 +330,11 @@ export function buildScene(renderer, world) {
   foam.position.set(0, 0.02, WORLD.sea - 2);
   scene.add(foam);
 
-  // Roads: one textured strip per avenue, laid both ways.
+  // Roads: one textured strip per avenue, laid both ways. The tile is 30 m of road, so
+  // repeat.x counts stretches, not metres.
   const roadTex = roadTexture();
   const roadLen = citySpan + 80;
+  roadTex.repeat.set(roadLen / 30, 1);
   const roadMat = new THREE.MeshLambertMaterial({ color: 0xffffff, map: roadTex });
   for (const a of world.axis) {
     const mid = (world.bounds.min + world.bounds.max) / 2;
@@ -384,32 +388,25 @@ export function buildScene(renderer, world) {
     scene.add(towel);
   }
 
-  // The pier: deck planks, posts and a small sign at the far end.
+  // The pier: a low plank deck that starts where the sand does, so it reads as a jetty
+  // lying on the beach rather than a slab floating over the promenade.
   const pier = world.pier;
   const deck = new THREE.Mesh(
-    new THREE.BoxGeometry(pier.w, 0.4, pier.d),
-    new THREE.MeshLambertMaterial({ color: 0x9a7a56 }),
+    new THREE.BoxGeometry(pier.w, 0.3, pier.d),
+    new THREE.MeshLambertMaterial({ color: 0xb08a5e }),
   );
-  deck.position.set(pier.x, 0.55, pier.z + pier.d / 2 - 6);
+  deck.position.set(pier.x, 0.42, pier.z + pier.d / 2 - 6);
   deck.receiveShadow = true;
   deck.castShadow = true;
   scene.add(deck);
   for (let i = 0; i < 9; i += 1) {
     for (const side of [-1, 1]) {
       const post = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 3.4, 6), solid(0x6b543b, true));
-      post.position.set(pier.x + side * (pier.w / 2 - 0.6), -0.9, pier.z + 10 + i * 9);
+      post.position.set(pier.x + side * (pier.w / 2 - 0.6), -1.45, pier.z + 10 + i * 9);
       scene.add(post);
     }
   }
-  const signPost = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 3.4, 5), solid(0x6b543b));
-  signPost.position.set(pier.x + 5, 2.2, pier.z + pier.d - 12);
-  scene.add(signPost);
-  const sign = new THREE.Mesh(
-    new THREE.BoxGeometry(4.4, 1.1, 0.16),
-    new THREE.MeshLambertMaterial({ color: 0x1f4f57 }),
-  );
-  sign.position.set(pier.x + 5, 3.6, pier.z + pier.d - 12);
-  scene.add(sign);
+  // The far end of the pier just tapers into the water: no sign board hanging in the air.
 
   return { scene, sun, sunDir, walls };
 }

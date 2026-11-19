@@ -15,7 +15,7 @@ into the city.
 | Move | W A S D |
 | Sprint | Shift |
 | Jump / handbrake | Space |
-| Look / aim | Mouse (click the canvas to capture the pointer) |
+| Look / aim | Mouse (click to capture the pointer; if the browser refuses, hold a button and drag) |
 | Enter or leave a car | E |
 | Fire pistol | Left mouse button |
 | Horn | H |
@@ -43,7 +43,9 @@ into the city.
 | `game/src/hud.js` | Health, cash, stars, mission card, minimap and speedometer. |
 | `game/src/audio.js` | Synthesised engine, siren, gunshot and footsteps. |
 | `game/src/main.js` | Wiring: build once, then update and draw each frame; save/load. |
-| `main.ts` | Typed package entry (`boot`, `POSES`); the page itself loads the JS module. |
+| `main.ts` | Build entry the grader runs: stages `game/` and `screenshots/`, writes `dossier.json`. |
+| `screenshots/` | The four contact-sheet pictures, rendered from `?shot=…` by a headless browser. |
+| `vendor/makefun-game.ts` | The kit's dossier builder, vendored unchanged. |
 
 `game/vendor/three.module.min.js` is the only third-party file: three.js r159, kept
 byte-for-byte as published, loaded through the import map. No CDN, no fetch, no
@@ -60,7 +62,27 @@ python -m http.server 8080
 
 then open `http://127.0.0.1:8080/game/`. The game starts at `game/index.html`.
 `?shot=street|chase|mission|beach` puts the world in a fixed, reproducible pose for
-screenshots; `?seed=<n>` changes the city's random pattern.
+screenshots; `?demo=drive|chase` drops you straight into a moving car (the chase demo
+already has three wanted stars and two cruisers on your tail); `?seed=<n>` changes the
+city's random pattern.
+
+## Screenshots
+
+`screenshots/` holds the pictures the judge sees, three or four of them, sorted by file
+name: the first one is the cover. They are rendered from the page by a headless Chrome,
+never painted by hand, and each one is at most 256 KiB and 1280 px on its long edge.
+`main.ts` copies the folder into the dossier, so a picture that is missing breaks the
+build instead of shipping empty.
+
+## Building the submission
+
+```
+MAKEFUN_OUTPUT_DIR=out node main.ts
+```
+
+That copies `game/` and `screenshots/` into `out/`, hands both to the kit's
+`buildDossier`, and writes `out/dossier.json`. The script refuses to run when the game
+entry, the pictures or a size cap is missing.
 
 ## The job
 

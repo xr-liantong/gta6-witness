@@ -53,6 +53,14 @@ export function createPolice(world, fleet) {
     heat = 1;
   }
 
+  // Screenshot poses set an exact wanted level: no heat build-up, no bleeding a star
+  // while a frame sits still.
+  function pin(amount) {
+    stars = Math.max(0, Math.min(LAW.stars, amount));
+    heat = stars > 0 ? 1 : 0;
+    calm = LAW.decaySeconds;
+  }
+
   function despawn(car) {
     car.driver = null;
     car.mesh.visible = false;
@@ -68,6 +76,7 @@ export function createPolice(world, fleet) {
       return heat > 0;
     },
     report,
+    pin,
     // Used by the screenshot poses: a cruiser where the picture needs it.
     spawnAt(x, z, yaw) {
       const car = fleet.spawn('sedan', x, z, yaw, PALETTE.police, { police: true });

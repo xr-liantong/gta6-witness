@@ -229,8 +229,11 @@ export function createPlayer(world, scene) {
     },
     enter(fleet) {
       if (state.inCar) return false;
-      const car = fleet.nearest(state.pos, 3.6);
-      if (!car) return false;
+      return this.enterCar(fleet.nearest(state.pos, 3.6));
+    },
+    // Direct hand-over, used by the demo openings and by anything that already picked a car.
+    enterCar(car) {
+      if (state.inCar || !car || car.driver === 'player') return false;
       state.inCar = car;
       car.driver = 'player';
       car.speed = 0;

@@ -11,7 +11,9 @@ export function createCamera(canvas, world) {
     0.12,
     1800,
   );
-  const state = { yaw: 0, pitch: 0.14, dist: TUNING.camBack, shake: 0 };
+  // side pushes the lens off the spine of the character, so the body sits in the lower
+  // third and the street opens up beyond the shoulder instead of filling the frame.
+  const state = { yaw: 0, pitch: 0.14, dist: TUNING.camBack, side: 0.55, look: 0.45, shake: 0 };
   const pivot = new THREE.Vector3(0, 2, 0);
   const want = new THREE.Vector3();
   const position = new THREE.Vector3();
@@ -49,11 +51,13 @@ export function createCamera(canvas, world) {
     pivot.lerp(aim, Math.min(1, dt * TUNING.camLag));
     const cp = Math.cos(state.pitch);
     const d = state.dist;
+    const rightX = Math.cos(state.yaw);
+    const rightZ = -Math.sin(state.yaw);
     offset.set(Math.sin(state.yaw) * cp, Math.sin(state.pitch), Math.cos(state.yaw) * cp).multiplyScalar(d);
     want.set(
-      pivot.x + offset.x,
-      pivot.y + 1.15 + offset.y * 0.95,
-      pivot.z + offset.z,
+      pivot.x + offset.x + rightX * state.side,
+      pivot.y + 0.4 + offset.y * 0.95,
+      pivot.z + offset.z + rightZ * state.side,
     );
     if (want.y < 0.9) want.y = 0.9;
 
@@ -83,7 +87,11 @@ export function createCamera(canvas, world) {
       position.y += (Math.random() - 0.5) * s;
     }
     camera.position.copy(position);
-    camera.lookAt(pivot.x, pivot.y + 0.35, pivot.z);
+    camera.lookAt(
+      pivot.x + rightX * state.side * 0.4,
+      pivot.y + state.look,
+      pivot.z + rightZ * state.side * 0.4,
+    );
   }
 
   return {
@@ -94,10 +102,14 @@ export function createCamera(canvas, world) {
     follow,
     get yaw() { return state.yaw; },
     set yaw(v) { state.yaw = v; },
-    // Screenshot poses need an exact angle, not a nudge.
-    pose(yaw, pitch = state.pitch) {
+    // Screenshot poses need an exact angle, not a nudge. The optional distance, shoulder
+    // offset and look height frame a subject hard: side 0 sits dead centre behind the body.
+    pose(yaw, pitch = state.pitch, dist = state.dist, side = state.side, look = state.look) {
       state.yaw = yaw;
       state.pitch = Math.max(TUNING.pitchMin, Math.min(TUNING.pitchMax, pitch));
+      state.dist = dist;
+      state.side = side;
+      state.look = look;
     },
     // Ground-plane direction the lens points at; movement "forward" follows it.
     forward() {

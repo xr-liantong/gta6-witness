@@ -131,6 +131,14 @@ export function createCrowd(world, scene) {
     ped.pos.z += (ped.pos.z - playerPos.z) * 0.6 * 0.06;
   }
 
+  // Put everyone where they belong before the first frame: the frozen screenshot poses
+  // never run update(), and a pavement full of pedestrians is exactly what they show.
+  for (const ped of peds) {
+    place(ped, 0);
+    ped.body.group.position.set(ped.pos.x, ped.pos.y, ped.pos.z);
+    ped.body.group.rotation.y = ped.yaw;
+  }
+
   return {
     peds,
     update(dt, playerPos, alarm, aimPoint) {

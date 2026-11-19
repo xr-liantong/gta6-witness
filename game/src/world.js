@@ -197,11 +197,13 @@ export function buildWorld(seed = 1) {
     parked,
     pedPaths,
     lanes: trafficLanes(axis, bounds),
-    spawn: { x: -110, z: 62, yaw: 0 },
+    // Start on the avenue, looking down the canyon: the marina is behind you, the hotel
+    // forecourt one block east, and the whole city is walkable from the first step.
+    spawn: { x: -85, z: 56, yaw: Math.PI },
     hotel,
     marina,
     docks,
-    pier: { x: -78, z: 286, w: 14, d: 86 },
+    pier: { x: -78, z: 296, w: 14, d: 86 },
     // The mission's car is parked on the hotel forecourt, facing the sea.
     jobCar: { x: hotel.x + 14, z: hotel.z + 16, yaw: Math.PI / 2, kind: 'coupe' },
     markers: {

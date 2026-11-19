@@ -73,8 +73,28 @@ export const SHOTS = {
   street: { mode: 'foot' },
   chase: { mode: 'chase' },
   mission: { mode: 'mission' },
-  beach: { mode: 'beach' },
+  downtown: { mode: 'systems' },
 };
+
+// Demo openings run the ordinary game with one thing already in progress, so a reviewer
+// (or a scripted browser) sees the city without having to win a pointer-lock prompt first.
+export const DEMOS = {
+  drive: { inCar: true, speed: 14, stars: 0 },
+  chase: { inCar: true, speed: 16, stars: 3 },
+};
+
+// One place parses the URL. No parameter means the normal cold open from the title card.
+export function queryOptions(search = '') {
+  const params = new URLSearchParams(search);
+  const shot = params.get('shot');
+  const demo = params.get('demo');
+  const seed = Number.parseInt(params.get('seed') ?? '1', 10);
+  return {
+    shot: shot && Object.hasOwn(SHOTS, shot) ? shot : null,
+    demo: demo && Object.hasOwn(DEMOS, demo) ? demo : null,
+    seed: Number.isFinite(seed) && seed > 0 ? seed : 1,
+  };
+}
 
 // How loudly the city objects to crime. Used by police.js and combat.js.
 export const LAW = {

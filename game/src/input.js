@@ -8,12 +8,14 @@ const SWALLOW = new Set([
 export function createInput(canvas) {
   const down = new Set();
   const fresh = new Set();
+  const pilot = new Set();
   const mouse = { dx: 0, dy: 0, held: 0, wheel: 0 };
   let locked = false;
   let dragLook = false;
 
   function keyPressed(e) {
     if (SWALLOW.has(e.code)) e.preventDefault();
+    if (pilot.size) pilot.clear(); // the first real key hands control back to the player
     if (!down.has(e.code)) fresh.add(e.code);
     down.add(e.code);
   }
@@ -66,21 +68,31 @@ export function createInput(canvas) {
 
   return {
     // Movement wish on the ground plane: x is strafe, y is forward, already normalised.
+    // A demo pilot can hold a key for us, which keeps the old demo opening inside the
+    // same code path a real keyboard press takes.
     move(out) {
       let x = 0;
       let y = 0;
-      if (down.has('KeyW') || down.has('ArrowUp')) y += 1;
-      if (down.has('KeyS') || down.has('ArrowDown')) y -= 1;
-      if (down.has('KeyA') || down.has('ArrowLeft')) x -= 1;
-      if (down.has('KeyD') || down.has('ArrowRight')) x += 1;
+      if (down.has('KeyW') || pilot.has('KeyW') || down.has('ArrowUp')) y += 1;
+      if (down.has('KeyS') || pilot.has('KeyS') || down.has('ArrowDown')) y -= 1;
+      if (down.has('KeyA') || pilot.has('KeyA') || down.has('ArrowLeft')) x -= 1;
+      if (down.has('KeyD') || pilot.has('KeyD') || down.has('ArrowRight')) x += 1;
       const len = Math.hypot(x, y) || 1;
       out.x = x / len;
       out.y = y / len;
-      out.run = down.has('ShiftLeft') || down.has('ShiftRight');
+      out.run = down.has('ShiftLeft') || down.has('ShiftRight') || pilot.has('ShiftLeft');
       return out;
     },
     held(code) {
-      return down.has(code);
+      return down.has(code) || pilot.has(code);
+    },
+    // Virtual keys used by the ?demo openings; releasing returns control to the player.
+    setPilot(code, on) {
+      if (on) pilot.add(code);
+      else pilot.delete(code);
+    },
+    clearPilot() {
+      pilot.clear();
     },
     // True on exactly one frame per physical press.
     tapped(code) {
