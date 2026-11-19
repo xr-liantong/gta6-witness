@@ -18,6 +18,8 @@ const tailMat = new THREE.MeshLambertMaterial({ color: 0xc8402f, emissive: 0x551
 export function makeVehicleMesh(spec, paint, options = {}) {
   const group = new THREE.Group();
   const bodyMat = new THREE.MeshLambertMaterial({ color: paint });
+  // Every car gets its own tail lamps so braking one car does not light up the street.
+  const brakeMat = tailMat.clone();
   const darkMat = new THREE.MeshLambertMaterial({
     color: new THREE.Color(paint).multiplyScalar(0.7),
   });
@@ -75,7 +77,7 @@ export function makeVehicleMesh(spec, paint, options = {}) {
     const head = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.16, 0.06), headMat);
     head.position.set(sx * (spec.width / 2 - 0.27), spec.height * 0.38 + spec.wheel, spec.length / 2 + 0.01);
     group.add(head);
-    const rear = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.14, 0.06), tailMat);
+    const rear = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.14, 0.06), brakeMat);
     rear.position.set(sx * (spec.width / 2 - 0.25), spec.height * 0.4 + spec.wheel, -spec.length / 2 - 0.01);
     group.add(rear);
     tail.push(rear);
@@ -114,5 +116,5 @@ export function makeVehicleMesh(spec, paint, options = {}) {
     lights = { red, blue };
   }
 
-  return { group, wheels, front, tail, lights, spec };
+  return { group, wheels, front, tail, lights, spec, brakeMat };
 }

@@ -186,6 +186,10 @@ export function start() {
 
   // Poses borrow the live objects: a traffic car is still a traffic car, a pedestrian is
   // still a pedestrian. Only where they stand is decided here.
+  function jobCar() {
+    return fleet.cars.find((c) => c.isJobCar) || null;
+  }
+
   function parkTraffic(index, x, z, yaw) {
     const cars = fleet.cars.filter((c) => c.driver === 'traffic' && !c.police);
     const car = cars[index % Math.max(1, cars.length)];
@@ -432,8 +436,19 @@ export function start() {
 
     for (const e of player.drain()) {
       if (e === 'step') audio.step();
-      else if (e === 'crash') audio.crash();
-      else if (e === 'shot') audio.gun();
+      else if (e === 'crash') {
+        audio.crash();
+        cam.kick(0.12);
+        // Bumping a cruiser is its own crime, even at a crawl.
+        if (player.inCar) {
+          for (const cruiser of police.cruisers) {
+            if (cruiser.mesh.visible && cruiser.pos.distanceTo(player.inCar.pos) < 7) {
+              police.report(1);
+              break;
+            }
+          }
+        }
+      } else if (e === 'shot') audio.gun();
       else if (e === 'jump') audio.step();
       else if (e === 'enter' || e === 'exit') audio.ui();
     }
@@ -443,7 +458,32 @@ export function start() {
         audio.cash();
         hud.showBanner(`+$${e.amount} — paid in full`);
       } else if (e.type === 'complete') {
+        // The hand-over is real: Dani steps out on the pier and the coupé is gone from the
+        // world, so the reward is visible in the street afterwards, not just in a number.
+        const job = jobCar();
+        if (job && player.inCar === job) player.leave();
+        if (job) {
+          job.mesh.visible = false;
+          job.driver = null;
+          job.isJobCar = false;
+          job.speed = 0;
+          job.vel.set(0, 0, 0);
+        }
         hud.showBanner('The Emerald Coupé: complete', '#bfe6c6');
+      } else if (e.type === 'retry') {
+        const job = jobCar();
+        if (job) {
+          job.mesh.visible = true;
+          job.driver = null;
+          job.isJobCar = true;
+          job.pos.set(world.jobCar.x, world.groundAt(world.jobCar.x, world.jobCar.z), world.jobCar.z);
+          job.yaw = world.jobCar.yaw;
+          job.mesh.position.copy(job.pos);
+          job.mesh.rotation.y = job.yaw;
+          job.speed = 0;
+          job.vel.set(0, 0, 0);
+        }
+        hud.showBanner('The coupé is back on the forecourt. Round two.', '#ffd479');
       }
     }
     for (const e of police.drain()) {
@@ -463,12 +503,14 @@ export function start() {
       if (deathTimer > 2.8) {
         player.respawn();
         police.clear();
+        missions.retry();
         hud.showBanner('Patched up at Solvara General. Minus $50.');
       }
     }
 
     player.aim(camAim);
-    cam.follow(dt, camAim);
+    // Getting in or out of a car is a one-second camera glide, not a cut.
+    cam.follow(dt * (player.state.hop > 0 ? 0.3 : 1), camAim);
     sun.position.set(
       player.state.pos.x + sunDir.x * 420,
       sunDir.y * 420,

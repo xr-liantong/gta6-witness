@@ -91,9 +91,20 @@ entry, the pictures or a size cap is missing.
 ## The job
 
 Reina Sosa runs the marina. She needs a specific emerald coupé moved off the hotel
-forecourt before sunrise, and she does not care how. Meet her at the marina, take the
-car from Hotel Miramar, drive it to Pier Nine, and stay clean long enough to get paid.
-Cash, ammunition, health and mission progress survive a reload through `localStorage`.
+forecourt before sunrise, and she does not care how. Meet her at the marina for forty
+dollars up front, take the car from Hotel Miramar, drive it to Pier Nine, and stay clean
+long enough to collect the other two hundred and fifty. The hand-over is real: the coupé
+leaves the world, and the beacon moves on. Get wasted mid-job and the car reappears on
+the forecourt so the theft can be tried again. Cash, ammunition, health and mission
+progress survive a reload through `localStorage`.
+
+## Heat
+
+Crime raises stars, cruisers spawn on the nearest avenue and drive at the player — siren
+on, both bars flashing, shots fired inside thirty metres. Stars are tinted from white
+through orange to deep red, so a still frame reads the heat before the number. Distance
+is the way out: hold three hundred metres for three seconds and a star drops, or stay
+out of sight for eight and the city calms down by itself.
 
 ## Design notes
 

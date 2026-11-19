@@ -90,6 +90,7 @@ export function createPlayer(world, scene) {
     walk: 0,
     aim: false,
     cooldown: 0,
+    hop: 0,
     dead: false,
   };
   const events = [];
@@ -232,11 +233,13 @@ export function createPlayer(world, scene) {
       return this.enterCar(fleet.nearest(state.pos, 3.6));
     },
     // Direct hand-over, used by the demo openings and by anything that already picked a car.
+    // The camera eases across for about a second instead of snapping to the new rig.
     enterCar(car) {
       if (state.inCar || !car || car.driver === 'player') return false;
       state.inCar = car;
       car.driver = 'player';
       car.speed = 0;
+      state.hop = 0.9;
       body.root.visible = false;
       events.push('enter');
       return true;
@@ -245,6 +248,7 @@ export function createPlayer(world, scene) {
       if (!state.inCar) return false;
       const car = state.inCar;
       car.driver = null;
+      state.hop = 0.9;
       const side = { x: Math.cos(car.yaw), z: -Math.sin(car.yaw) };
       state.pos.set(car.pos.x + side.x * 2.6, 0, car.pos.z + side.z * 2.6);
       pushedOut(state.pos);
@@ -288,6 +292,7 @@ export function createPlayer(world, scene) {
     // Called once per frame with the shared input and camera.
     update(dt, input, cam) {
       state.cooldown = Math.max(0, state.cooldown - dt);
+      if (state.hop > 0) state.hop = Math.max(0, state.hop - dt);
       if (body.flash.visible) {
         state.flashLeft = (state.flashLeft || 0.06) - dt;
         if (state.flashLeft <= 0) {

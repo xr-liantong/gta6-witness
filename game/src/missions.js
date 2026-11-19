@@ -27,7 +27,7 @@ export function createMissions(world) {
       ],
     },
     {
-      objective: 'Drive it to Pier Nine at the docks',
+      objective: 'Deliver the coupé to Pier Nine',
       marker: world.markers.drop,
       lines: [
         ['Reina', 'Pier Nine. Bring it round the back and keep the engine warm.'],
@@ -61,6 +61,10 @@ export function createMissions(world) {
       if (state.done) return 'Free roam: the city is yours';
       return beats[state.step].objective;
     },
+    // "1/3" for the HUD card: the chain has three beats even after the last one.
+    get progress() {
+      return `${Math.min(state.step + 1, beats.length)}/${beats.length}`;
+    },
     get subtitle() {
       return line;
     },
@@ -69,6 +73,16 @@ export function createMissions(world) {
     },
     begin() {
       if (state.step === 0 && state.timer === 0) enterStep(0);
+    },
+    // Wreck it, get caught, wake up in hospital: the coupé is still on the forecourt and
+    // the chain restarts at the theft, not at the meeting.
+    retry() {
+      if (state.done || state.step === 0) return false;
+      queue.length = 0;
+      line = null;
+      events.push({ type: 'retry' });
+      enterStep(1);
+      return true;
     },
     drain() {
       const out = events.slice();
@@ -86,6 +100,9 @@ export function createMissions(world) {
       if (state.done) return;
       if (state.step === 0) {
         if (Math.hypot(player.state.pos.x - world.marina.x, player.state.pos.z - world.marina.z) < 6) {
+          player.state.money += 40;
+          events.push({ type: 'reward', amount: 40 });
+          say('Reina', 'Forty up front. The rest when the car is on the pier.');
           enterStep(1);
         }
         return;

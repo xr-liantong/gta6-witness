@@ -9,6 +9,7 @@ export function createPolice(world, fleet) {
   let heat = 0;
   let calm = LAW.decaySeconds;
   let spawnTimer = 0;
+  let away = 0;
   const events = [];
 
   function nearestLane(point) {
@@ -113,11 +114,13 @@ export function createPolice(world, fleet) {
       }
 
       let seen = false;
+      let nearest = Infinity;
       for (const car of cruisers) {
         if (!car.mesh.visible) continue;
         const dx = target.x - car.pos.x;
         const dz = target.z - car.pos.z;
         const dist = Math.hypot(dx, dz);
+        nearest = Math.min(nearest, dist);
         if (dist < LAW.loseDistance) seen = true;
 
         const wantYaw = Math.atan2(dx, dz);
@@ -168,6 +171,21 @@ export function createPolice(world, fleet) {
         }
       } else if (seen) {
         calm = LAW.decaySeconds;
+      }
+
+      // Clean getaway: nothing on the map within escape distance and one star falls per
+      // held beat. Distance, not the clock, is what the player is buying.
+      if (stars > 0 && nearest > LAW.escapeDistance) {
+        away += dt;
+        if (away >= LAW.escapeSeconds) {
+          away = 0;
+          stars -= 1;
+          calm = LAW.decaySeconds;
+          events.push('cool');
+          if (stars <= 0) for (const car of cruisers) despawn(car);
+        }
+      } else {
+        away = 0;
       }
     },
   };

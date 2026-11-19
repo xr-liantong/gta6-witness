@@ -102,7 +102,9 @@ export const LAW = {
   spawnDistance: 130,   // a cruiser appears this far away, on the nearest avenue
   loseDistance: 90,     // out of every cruiser's sight for...
   loseSeconds: 8,       // ...this long, and the city calms down
-  decaySeconds: 22,     // without any new crime, one star goes away
+  decaySeconds: 12,     // without any new crime, one star goes away (12 + 8 = 20 s)
+  escapeDistance: 300,  // break line of sight this far and a star drops at once
+  escapeSeconds: 3,     // held for this long, so a fly-by does not clear the heat
   cruiserSpeed: 22,
 };
 

@@ -22,7 +22,11 @@ function roundRect(g, x, y, w, h, r) {
   g.closePath();
 }
 
-function star(g, cx, cy, r, filled) {
+// Wanted escalation reads at a glance even in a 768 px thumbnail: the stars go from
+// bone white to yellow, orange, red and finally a deep blood red.
+const STAR_TINT = ['#f6f1e2', '#ffb03a', '#ff5a3c', '#e01b24', '#8b0f16'];
+
+function star(g, cx, cy, r, tint) {
   g.beginPath();
   for (let i = 0; i < 10; i += 1) {
     const angle = -Math.PI / 2 + (i * Math.PI) / 5;
@@ -30,9 +34,9 @@ function star(g, cx, cy, r, filled) {
     g.lineTo(cx + Math.cos(angle) * rad, cy + Math.sin(angle) * rad);
   }
   g.closePath();
-  g.fillStyle = filled ? GOLD : 'rgba(255,255,255,0.16)';
+  g.fillStyle = tint || 'rgba(255,255,255,0.16)';
   g.fill();
-  g.strokeStyle = filled ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.25)';
+  g.strokeStyle = tint ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.25)';
   g.lineWidth = 1;
   g.stroke();
 }
@@ -212,35 +216,37 @@ export function createHud(canvas, world) {
     g.fillStyle = 'rgba(248,243,230,0.55)';
     g.fillText(`AMMO ${state.player.state.ammo}`, 24, 96);
 
-    // Wanted stars, top right.
+    // Wanted stars, top right: the tint climbs with the heat, so a still frame still
+    // says "three stars" before anyone reads the number.
     const stars = state.police.stars;
     const flash = state.time * 6;
     for (let i = 0; i < 5; i += 1) {
       const lit = i < stars;
       if (lit) {
-        g.shadowColor = Math.sin(flash + i) > 0 ? 'rgba(255,111,82,0.9)' : 'rgba(90,150,255,0.9)';
+        g.shadowColor = Math.sin(flash + i) > 0 ? 'rgba(255,111,82,0.75)' : 'rgba(120,170,255,0.75)';
         g.shadowBlur = 12;
       }
-      star(g, W - 40 - i * 34, 36, 12, lit);
+      star(g, W - 40 - i * 34, 36, 12, lit ? STAR_TINT[Math.min(i, 4)] : null);
       g.shadowBlur = 0;
     }
 
     // Mission card, top centre. One line of objective in 17 px survives the contact
     // sheet being scaled down to 768 wide, which is where the judges will read it.
     const obj = state.missions.objective;
+    const prog = state.missions.progress;
     g.font = font(17, 700);
     const tw = g.measureText(obj).width;
-    const bx = W / 2 - tw / 2 - 24;
+    const bx = W / 2 - (tw + 96) / 2;
     g.fillStyle = 'rgba(12, 26, 34, 0.68)';
-    roundRect(g, bx, 18, tw + 48, 46, 23);
+    roundRect(g, bx, 18, tw + 96, 46, 23);
     g.fill();
     g.strokeStyle = 'rgba(255,212,121,0.45)';
     g.lineWidth = 1;
-    roundRect(g, bx, 18, tw + 48, 46, 23);
+    roundRect(g, bx, 18, tw + 96, 46, 23);
     g.stroke();
     g.fillStyle = GOLD;
     g.font = font(10, 800);
-    g.fillText('MISSION', bx + 18, 36);
+    g.fillText(`MISSION ${prog}`, bx + 18, 36);
     g.fillStyle = INK;
     g.font = font(17, 700);
     g.fillText(obj, bx + 18, 57);

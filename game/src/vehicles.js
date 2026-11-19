@@ -30,7 +30,9 @@ function makeCar(kind, paint, options = {}) {
     mesh: built.group,
     wheels: built.wheels,
     front: built.front,
+    tail: built.tail,
     lights: built.lights,
+    brakeMat: built.brakeMat,
     pos: new THREE.Vector3(0, 0, 0),
     yaw: 0,
     vel: new THREE.Vector3(),
@@ -143,7 +145,10 @@ export function createFleet(world, scene) {
     vLat *= Math.pow(grip, dt * 60);
 
     const authority = Math.min(1, Math.abs(vLong) / 6.5);
-    car.yaw += (controls.steer || 0) * DRIVE.turnRate * authority * (vLong < 0 ? -1 : 1) * dt;
+    // Steering has weight: the wheel eases toward the stick, so a tap does not snap the car.
+    const aim = controls.steer || 0;
+    car.steerMix = (car.steerMix ?? 0) + (aim - (car.steerMix ?? 0)) * Math.min(1, dt * 9);
+    car.yaw += car.steerMix * DRIVE.turnRate * authority * (vLong < 0 ? -1 : 1) * dt;
 
     car.vel.x = sin * vLong + cos * vLat;
     car.vel.z = cos * vLong - sin * vLat;
@@ -151,6 +156,8 @@ export function createFleet(world, scene) {
     car.pos.z += car.vel.z * dt;
     car.speed = vLong;
     car.steer = controls.steer || 0;
+    // Tail lamps glow while the driver is on the brake or the handbrake.
+    car.braking = Boolean(controls.handbrake) || throttle < 0 || (throttle === 0 && vLong > 1);
 
     let hit = hitBuildings(car);
     if (hitCars(car)) hit = true;
@@ -174,7 +181,7 @@ export function createFleet(world, scene) {
     car.mesh.rotation.y = car.yaw;
     car.spin += vLong * dt * 2.6;
     for (const w of car.wheels) w.rotation.x = car.spin;
-    for (const w of car.front) w.rotation.y = car.steer * 0.42;
+    for (const w of car.front) w.rotation.y = (car.steerMix ?? 0) * 0.42;
     if (car.bump > 0) car.bump = Math.max(0, car.bump - dt * 2.5);
   }
 
@@ -200,6 +207,10 @@ export function createFleet(world, scene) {
     },
     update(dt) {
       for (const car of cars) {
+        // Brake glow is read by everyone, including the parked cars a stray round hits.
+        if (car.brakeMat) {
+          car.brakeMat.emissiveIntensity = car.braking && car.driver ? 2.2 : 0.5;
+        }
         if (car.driver === 'player' || car.driver === 'traffic' || car.police) continue;
         if (Math.abs(car.speed) > 0.01) drive(car, dt, { throttle: 0, steer: 0, handbrake: true });
       }
