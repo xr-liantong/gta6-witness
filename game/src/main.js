@@ -33,7 +33,7 @@ export function start() {
   const cam = createCamera(canvas, world);
   const input = createInput(canvas);
   const fleet = createFleet(world, scene);
-  const player = createPlayer(world, scene);
+  const player = createPlayer(world, scene, fleet);
   const traffic = createTraffic(world, fleet);
   const crowd = createCrowd(world, scene);
   const police = createPolice(world, fleet);
@@ -286,7 +286,7 @@ export function start() {
       standPed(2, -64, 293, -Math.PI / 2);
     } else if (name === 'downtown') {
       // One frame, every system: traffic on the cross street, people on the corners, two
-      // cruisers and two wanted stars, minimap and mission card all at once.
+      // cruisers lit up and close enough to read, minimap and mission card all at once.
       p.pos.set(85, 0.03, 102);
       p.yaw = Math.PI - 0.32;
       cam.pose(0, 0, 3.6, 1.1, 0.5);
@@ -295,16 +295,22 @@ export function start() {
       parkTraffic(0, 78, 90, Math.PI / 2);
       parkTraffic(1, 66, 85, Math.PI / 2);
       parkTraffic(2, 98, 85, -Math.PI / 2);
-      const a = police.spawnAt(78, 70, 0);
-      const b = police.spawnAt(94, 72, 0);
+      // Twelve and fifteen metres ahead, noses toward the camera, bars lit red and blue.
+      const a = police.spawnAt(80.5, 86, 0);
+      const b = police.spawnAt(89.5, 88, 0);
       lightBar(a, 2);
       lightBar(b, 0.2);
       for (const cruiser of police.cruisers) cruiser.mesh.position.copy(cruiser.pos);
-      standPed(0, 68, 78, Math.PI / 2);
-      standPed(1, 102, 78, -Math.PI / 2);
-      standPed(2, 74, 92, 0);
-      standPed(3, 96, 90, Math.PI);
+      standPed(0, 74, 96, Math.PI / 2);
+      standPed(1, 96, 96, -Math.PI / 2);
+      standPed(2, 78, 93, 0);
+      standPed(3, 93, 95, Math.PI);
     }
+    // Poses move the player by teleporting the state; the body mesh is what the camera
+    // actually sees, so it has to be carried along by hand or the hero stays at spawn.
+    player.body.position.set(p.pos.x, p.pos.y, p.pos.z);
+    player.body.rotation.y = p.yaw;
+    player.body.visible = !p.inCar;
     for (let i = 0; i < 60; i += 1) {
       player.aim(camAim);
       cam.follow(1 / 60, camAim);
@@ -339,7 +345,9 @@ export function start() {
     input.setPilot('KeyW', true);
     playing = true;
     title.classList.add('hidden');
-    hint.classList.remove('show');
+    hint.textContent = 'You are in the car — WASD to take over, Esc to pause';
+    hint.classList.add('show');
+    setTimeout(() => hint.classList.remove('show'), 6000);
     missions.begin();
     hud.showBanner(
       mode === 'chase'
@@ -391,9 +399,9 @@ export function start() {
       return;
     }
     time += dt;
-    // Demo entries exist for reviewers who cannot grant pointer lock: four seconds of
-    // live driving, then the frame holds still so a screenshot tool cannot stall on it.
-    if (demo && time > 4) {
+    // A headless harness needs one stable frame to photograph; a person needs the car to
+    // keep moving. Only automation gets the four-second freeze, and ?freeze=1 forces it.
+    if (demo && time > 4 && (navigator.webdriver || location.search.includes('freeze'))) {
       frozen = true;
       return;
     }
@@ -541,6 +549,8 @@ export function start() {
   }
 
   const loop = createLoop({ update, render });
+  // Read back with `window.__perf` in the console: rafs, worst frame, mode, last error.
+  loop.setMode(demo ? `demo:${demo}` : shotName ? `shot:${shotName}` : 'play');
   loop.start();
 
   // Escape: browsers release the pointer themselves, the change handler pauses us.

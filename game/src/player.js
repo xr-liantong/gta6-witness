@@ -74,7 +74,7 @@ function buildBody() {
   return { root, hips, legs, arms, gun, flash };
 }
 
-export function createPlayer(world, scene) {
+export function createPlayer(world, scene, fleet) {
   const body = buildBody();
   scene.add(body.root);
 
@@ -194,7 +194,8 @@ export function createPlayer(world, scene) {
     };
     const before = car.speed;
     car.driver = 'player';
-    car.drive(car, dt, controls);
+    // The physics lives in the fleet: a car is data, fleet.drive() is the driver.
+    fleet.drive(car, dt, controls);
     if (car.bump > 0.9 && Math.abs(before) > 5) events.push('crash');
     state.pos.copy(car.pos);
     state.yaw = car.yaw;

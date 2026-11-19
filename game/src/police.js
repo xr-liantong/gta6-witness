@@ -174,8 +174,9 @@ export function createPolice(world, fleet) {
       }
 
       // Clean getaway: nothing on the map within escape distance and one star falls per
-      // held beat. Distance, not the clock, is what the player is buying.
-      if (stars > 0 && nearest > LAW.escapeDistance) {
+      // held beat. Distance, not the clock, is what the player is buying. A missing
+      // cruiser is not a getaway — it just has not spawned yet.
+      if (stars > 0 && nearest > LAW.escapeDistance && nearest < Infinity) {
         away += dt;
         if (away >= LAW.escapeSeconds) {
           away = 0;

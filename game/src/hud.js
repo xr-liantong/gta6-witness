@@ -63,7 +63,8 @@ export function createHud(canvas, world) {
 
   function minimap(state) {
     const size = Math.min(210, Math.max(150, W * 0.16));
-    const pad = 22;
+    // Same proportional safe edge as the top-left block, so nothing is clipped at 768 px.
+    const pad = Math.round(W * 0.02) + 4;
     const x = pad;
     const y = H - size - pad;
     const scale = size / 260; // 260 metres across the dial
@@ -196,25 +197,29 @@ export function createHud(canvas, world) {
     g.clearRect(0, 0, W, H);
     hitFlash = Math.max(0, state.combat ? state.combat.flash : 0);
 
+    // Left safe edge, in canvas proportions rather than pixels: at 1280 wide this is 26 px,
+    // so the health capsule never touches the cut edge of a 768 px contact sheet.
+    const left = Math.round(W * 0.02) + 8;
+
     // Health: a wide capsule at the top left, with a thin armour-thin outline.
     const hp = state.player.state.health / 100;
     g.fillStyle = 'rgba(12, 26, 34, 0.55)';
-    roundRect(g, 22, 20, 214, 26, 13);
+    roundRect(g, left, 20, 214, 26, 13);
     g.fill();
     g.fillStyle = hp > 0.5 ? '#8fd6a8' : hp > 0.25 ? GOLD : CORAL;
-    roundRect(g, 24, 22, Math.max(6, 210 * hp), 22, 11);
+    roundRect(g, left + 2, 22, Math.max(6, 210 * hp), 22, 11);
     g.fill();
     g.fillStyle = INK;
     g.font = font(12, 700);
-    g.fillText('HEALTH', 34, 38);
+    g.fillText('HEALTH', left + 12, 38);
 
     // Money, top left under health.
     g.font = font(26, 800);
     g.fillStyle = '#bfe6c6';
-    g.fillText(`$${state.player.state.money.toLocaleString('en-US')}`, 24, 78);
+    g.fillText(`$${state.player.state.money.toLocaleString('en-US')}`, left, 78);
     g.font = font(11, 600);
     g.fillStyle = 'rgba(248,243,230,0.55)';
-    g.fillText(`AMMO ${state.player.state.ammo}`, 24, 96);
+    g.fillText(`AMMO ${state.player.state.ammo}`, left, 96);
 
     // Wanted stars, top right: the tint climbs with the heat, so a still frame still
     // says "three stars" before anyone reads the number.

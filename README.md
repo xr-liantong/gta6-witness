@@ -42,7 +42,7 @@ into the city.
 | `game/src/traffic.js` | Civilian cars looping along the road grid. |
 | `game/src/crowd.js` | Pedestrians on the pavements, and how they react to guns. |
 | `game/src/police.js` | Wanted stars, responding cruisers, sirens and their fire. |
-| `game/src/missions.js` | The three-step job: markers, dialogue, reward. |
+| `game/src/missions.js` | The three-step job: markers, dialogue, rewards, retry. |
 | `game/src/combat.js` | Hitscan pistol, tracers, sparks and the consequences. |
 | `game/src/hud.js` | Health, cash, stars, mission card, minimap and speedometer. |
 | `game/src/audio.js` | Synthesised engine, siren, gunshot and footsteps. |
@@ -65,7 +65,7 @@ python -m http.server 8080
 ```
 
 then open `http://127.0.0.1:8080/game/`. The game starts at `game/index.html`.
-`?shot=street|chase|mission|beach` puts the world in a fixed, reproducible pose for
+`?shot=street|chase|mission|downtown` puts the world in a fixed, reproducible pose for
 screenshots; `?demo=drive|chase` drops you straight into a moving car (the chase demo
 already has three wanted stars and two cruisers on your tail); `?seed=<n>` changes the
 city's random pattern.
