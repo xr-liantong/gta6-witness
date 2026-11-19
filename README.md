@@ -1,5 +1,9 @@
 # Solvara — a sun-soaked open city
 
+[![make.fun · gta6-01](https://make.fun/badge/gta6-01.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![rank](https://make.fun/badge/gta6-01/xr-liantong/gta6-witness/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![reward](https://make.fun/badge/gta6-01/xr-liantong/gta6-witness/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+
 A single-page 3D crime sandbox set in **Solvara**, an invented Mediterranean city of
 pastel blocks, palm-lined streets and a long beach. You walk, steal cars, take a job
 from a local fixer, attract police attention and try to shake it. Everything is built
